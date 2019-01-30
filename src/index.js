@@ -25,7 +25,7 @@ const FIELD_MAPPING = {
     Z: 'postalCode'
 };
 
-const KNOWN_FIELDS = Object.values(FIELD_MAPPING).concat(['country_code']);
+const KNOWN_FIELDS = Object.values(FIELD_MAPPING).concat(['countryCode']);
 
 class ValidationRules {
     constructor ({
@@ -480,6 +480,7 @@ function latinizeAddress(address, normalized = false) {
 }
 
 module.exports = {
+    KNOWN_FIELDS,
     loadValidationData,
     ValidationRules,
     getValidationRules,
