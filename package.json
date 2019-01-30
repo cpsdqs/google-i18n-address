@@ -1,0 +1,19 @@
+{
+  "name": "google-i18n-address",
+  "version": "2.3.4",
+  "description": "Address validation helpers for Google’s i18n address database",
+  "main": "src",
+  "scripts": {
+    "test": "node tests"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cpsdqs/google-i18n-address.git"
+  },
+  "contributors": ["Mirumee Software", "cpsdqs <cpsdqs@gmail.com>"],
+  "license": "BSD-3-Clause",
+  "bugs": {
+    "url": "https://github.com/cpsdqs/google-i18n-address/issues"
+  },
+  "homepage": "https://github.com/cpsdqs/google-i18n-address#readme"
+}
