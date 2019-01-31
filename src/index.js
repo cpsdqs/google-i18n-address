@@ -1,7 +1,33 @@
+const VALID_COUNTRY_CODE = /^\w{2,3}$/;
+
+/*
+webpack-compatible version
+*/
+
+const validationData = Object.assign(require('./data/all.json'), require('./data/zz.json'));
+const cachedValidationDataSubsets = {};
+
+function loadValidationData(countryCode = 'all') {
+    if (!countryCode.match(VALID_COUNTRY_CODE)) {
+        throw new Error(`${countryCode} is not a valid country code`);
+    }
+    countryCode = countryCode.toUpperCase();
+    if (countryCode === 'ALL') return validationData;
+    if (!(countryCode in validationData)) return null;
+    if (countryCode in cachedValidationDataSubsets) return cachedValidationDataSubsets[countryCode];
+    const relevantEntries = Object.keys(validationData).filter(key =>
+        key.startsWith(countryCode) && key.substr(countryCode.length).match(/^(\W|$)/));
+    cachedValidationDataSubsets[countryCode] = {};
+    for (const key of relevantEntries) {
+        cachedValidationDataSubsets[countryCode][key] = validationData[key];
+    }
+    return cachedValidationDataSubsets[countryCode];
+}
+
+/*
 const fs = require('fs');
 const path = require('path');
 
-const VALID_COUNTRY_CODE = /^\w{2,3}$/;
 const VALIDATION_DATA_DIR = path.join(__dirname, 'data');
 const VALIDATION_DATA_PATH = (name) => path.join(VALIDATION_DATA_DIR, `${name}.json`);
 
@@ -13,6 +39,7 @@ function loadValidationData(countryCode = 'all') {
     const filePath = VALIDATION_DATA_PATH(countryCode);
     return JSON.parse(fs.readFileSync(filePath).toString());
 }
+*/
 
 const FIELD_MAPPING = {
     A: 'streetAddress',
@@ -143,7 +170,7 @@ function loadCountryData(countryCode) {
             throw new Error(`${countryCode} is not a valid country code`);
         }
         database = loadValidationData(countryCode.toLowerCase());
-        Object.assign(countryData, database[countryCode]);
+        countryData = Object.assign({}, countryData, database[countryCode]);
     }
     return [countryData, database];
 }
