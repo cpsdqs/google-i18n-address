@@ -342,10 +342,10 @@ class InvalidAddress extends Error {
     }
 }
 
-function normalizeField(name, rules, data, choices, errors) {
+function normalizeField(name, rules, data, choices, errors, formatLocale) {
     let value = data[name];
     if (rules.upperFields.includes(name) && value) {
-        value = data[name] = value.toUpperCase();
+        value = data[name] = value.toLocaleUpperCase(formatLocale);
     }
     if (!rules.allowedFields.includes(name)) data[name] = '';
     else if (!value && rules.requiredFields.includes(name)) {
@@ -361,7 +361,7 @@ function normalizeField(name, rules, data, choices, errors) {
     if (!value) data[name] = '';
 }
 
-function normalizeAddress(address) {
+function normalizeAddress(address, formatLocale) {
     const errors = {};
     let rules;
     try {
@@ -376,13 +376,13 @@ function normalizeAddress(address) {
     if (!countryCode) {
         errors.countryCode = 'required';
     } else {
-        cleanedData.countryCode = countryCode.toUpperCase();
+        cleanedData.countryCode = countryCode.toLocaleUpperCase(formatLocale);
     }
 
-    normalizeField('countryArea', rules, cleanedData, rules.countryAreaChoices, errors);
-    normalizeField('city', rules, cleanedData, rules.cityChoices, errors);
-    normalizeField('cityArea', rules, cleanedData, rules.cityAreaChoices, errors);
-    normalizeField('postalCode', rules, cleanedData, [], errors);
+    normalizeField('countryArea', rules, cleanedData, rules.countryAreaChoices, errors, formatLocale);
+    normalizeField('city', rules, cleanedData, rules.cityChoices, errors, formatLocale);
+    normalizeField('cityArea', rules, cleanedData, rules.cityAreaChoices, errors, formatLocale);
+    normalizeField('postalCode', rules, cleanedData, [], errors, formatLocale);
     const postalCode = cleanedData.postalCode || '';
     if (rules.postalCodeMatchers.length && postalCode) {
         for (const matcher of rules.postalCodeMatchers) {
@@ -392,8 +392,8 @@ function normalizeAddress(address) {
             }
         }
     }
-    normalizeField('streetAddress', rules, cleanedData, [], errors);
-    normalizeField('sortingCode', rules, cleanedData, [], errors);
+    normalizeField('streetAddress', rules, cleanedData, [], errors, formatLocale);
+    normalizeField('sortingCode', rules, cleanedData, [], errors, formatLocale);
     if (Object.keys(errors).length) {
         throw new InvalidAddress('Invalid address', errors);
     }
@@ -401,11 +401,11 @@ function normalizeAddress(address) {
     return cleanedData;
 }
 
-function formatAddressLine(lineFormat, address, rules) {
+function formatAddressLine(lineFormat, address, rules, formatLocale) {
     const getField = name => {
         let value = address[name] || '';
         if (rules.upperFields.includes(name)) {
-            value = value.toUpperCase();
+            value = value.toLocaleUpperCase(formatLocale);
         }
         return value;
     };
@@ -459,15 +459,15 @@ function getFieldOrder(address, latin = false) {
     return allLines;
 }
 
-function formatAddress(address, latin = false) {
+function formatAddress(address, latin = false, formatLocale, countryOverride) {
     const rules = getValidationRules(address);
     const addressFormat = latin ? rules.addressLatinFormat : rules.addressFormat;
     const addressLineFormats = addressFormat.split(/%n/g);
     const addressLines = [];
     for (const lf of addressLineFormats) {
-        addressLines.push(formatAddressLine(lf, address, rules));
+        addressLines.push(formatAddressLine(lf, address, rules, formatLocale));
     }
-    addressLines.push(rules.countryName);
+    addressLines.push(countryOverride ? countryOverride.toLocaleUpperCase(formatLocale) : rules.countryName);
     return addressLines.filter(x => x).join('\n');
 }
 
