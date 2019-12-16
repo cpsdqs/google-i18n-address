@@ -1,45 +1,25 @@
+import dataIndex from 'magic-replace-data-index-import';
+
 const VALID_COUNTRY_CODE = /^\w{2,3}$/;
 
-/*
-webpack-compatible version
-*/
-
-const validationData = Object.assign(require('./data/all.json'), require('./data/zz.json'));
 const cachedValidationDataSubsets = {};
 
-function loadValidationData(countryCode = 'all') {
+async function loadValidationData(countryCode = 'all') {
     if (!countryCode.match(VALID_COUNTRY_CODE)) {
         throw new Error(`${countryCode} is not a valid country code`);
     }
+    if (!dataIndex.allowsAll && countryCode === 'all') {
+        throw new Error('loading all countries is not allowed');
+    }
     countryCode = countryCode.toUpperCase();
-    if (countryCode === 'ALL') return validationData;
-    if (!(countryCode in validationData)) return null;
-    if (countryCode in cachedValidationDataSubsets) return cachedValidationDataSubsets[countryCode];
-    const relevantEntries = Object.keys(validationData).filter(key =>
-        key.startsWith(countryCode) && key.substr(countryCode.length).match(/^(\W|$)/));
-    cachedValidationDataSubsets[countryCode] = {};
-    for (const key of relevantEntries) {
-        cachedValidationDataSubsets[countryCode][key] = validationData[key];
+    if (!(countryCode in cachedValidationDataSubsets)) {
+        const dataPromise = dataIndex(countryCode.toLowerCase());
+        if (!dataPromise) throw new Error('no such country ' + countryCode);
+        const data = await dataPromise();
+        cachedValidationDataSubsets[countryCode] = data;
     }
     return cachedValidationDataSubsets[countryCode];
 }
-
-/*
-const fs = require('fs');
-const path = require('path');
-
-const VALIDATION_DATA_DIR = path.join(__dirname, 'data');
-const VALIDATION_DATA_PATH = (name) => path.join(VALIDATION_DATA_DIR, `${name}.json`);
-
-function loadValidationData(countryCode = 'all') {
-    if (!countryCode.match(VALID_COUNTRY_CODE)) {
-        throw new Error(`${countryCode} is not a valid country code`);
-    }
-    countryCode = countryCode.toLowerCase();
-    const filePath = VALIDATION_DATA_PATH(countryCode);
-    return JSON.parse(fs.readFileSync(filePath).toString());
-}
-*/
 
 const FIELD_MAPPING = {
     A: 'streetAddress',
@@ -95,17 +75,15 @@ class ValidationRules {
 }
 
 // polyfill
-function zip(a, b) {
+function* zip(a, b) {
     a = a[Symbol.iterator]();
     b = b[Symbol.iterator]();
-    return (function* () {
-        while (true) {
-            let nextA = a.next();
-            let nextB = b.next();
-            if (nextA.done || nextB.done) break;
-            yield [nextA.value, nextB.value];
-        }
-    })();
+    while (true) {
+        let nextA = a.next();
+        let nextB = b.next();
+        if (nextA.done || nextB.done) break;
+        yield [nextA.value, nextB.value];
+    }
 }
 
 function makeChoices(rules, translated = false) {
@@ -160,18 +138,19 @@ function matchChoices(value, choices) {
     return null;
 }
 
-function loadCountryData(countryCode) {
-    let database = loadValidationData('zz');
+async function loadCountryData(countryCode) {
+    let database = await loadValidationData('zz');
     let countryData = database.ZZ;
 
     if (countryCode) {
         countryCode = countryCode.toUpperCase();
-        if (countryCode.toLowerCase() == 'zz') {
+        if (countryCode.toLowerCase() === 'zz') {
             throw new Error(`${countryCode} is not a valid country code`);
         }
-        database = loadValidationData(countryCode.toLowerCase());
+        database = await loadValidationData(countryCode.toLowerCase());
         countryData = Object.assign({}, countryData, database[countryCode]);
     }
+
     return [countryData, database];
 }
 
@@ -183,9 +162,9 @@ function* reFindIter(regex, string) {
     }
 }
 
-function getValidationRules(address) {
+async function getValidationRules(address) {
     const countryCode = (address.countryCode || '').toUpperCase();
-    const [countryData, database] = loadCountryData(countryCode);
+    const [countryData, database] = await loadCountryData(countryCode);
     const countryName = countryData.name || '';
     const addressFormat = countryData.fmt;
     const addressLatinFormat = countryData.lfmt || addressFormat;
@@ -361,11 +340,11 @@ function normalizeField(name, rules, data, choices, errors, formatLocale) {
     if (!value) data[name] = '';
 }
 
-function normalizeAddress(address, formatLocale) {
+async function normalizeAddress(address, formatLocale) {
     const errors = {};
     let rules;
     try {
-        rules = getValidationRules(address);
+        rules = await getValidationRules(address);
     } catch (error) {
         errors.countryCode = 'invalid';
         throw new InvalidAddress('Invalid address', errors, error);
@@ -427,7 +406,7 @@ function formatAddressLine(lineFormat, address, rules, formatLocale) {
     return fieldsp.join('').trim();
 }
 
-function getFieldOrder(address, latin = false) {
+async function getFieldOrder(address, latin = false) {
     /*
      Returns expected order of address form fields as a list of lists.
      Example for PL:
@@ -435,7 +414,7 @@ function getFieldOrder(address, latin = false) {
      [['name'], ['company_name'], ['street_address'], ['postal_code', 'city']]
      */
 
-    const rules = getValidationRules(address);
+    const rules = await getValidationRules(address);
     const addressFormat = latin ? rules.addressLatinFormat : rules.addressFormat;
     const addressLines = addressFormat.split(/%n/g);
 
@@ -459,8 +438,8 @@ function getFieldOrder(address, latin = false) {
     return allLines;
 }
 
-function formatAddress(address, latin = false, formatLocale, countryOverride) {
-    const rules = getValidationRules(address);
+async function formatAddress(address, latin = false, formatLocale, countryOverride) {
+    const rules = await getValidationRules(address);
     const addressFormat = latin ? rules.addressLatinFormat : rules.addressFormat;
     const addressLineFormats = addressFormat.split(/%n/g);
     const addressLines = [];
@@ -471,14 +450,14 @@ function formatAddress(address, latin = false, formatLocale, countryOverride) {
     return addressLines.filter(x => x).join('\n');
 }
 
-function latinizeAddress(address, normalized = false) {
+async function latinizeAddress(address, normalized = false) {
     if (!normalized) {
-        address = normalizeAddress(address);
+        address = await normalizeAddress(address);
     }
 
     const cleanedData = Object.assign({}, address);
     const countryCode = (address.countryCode || '').toUpperCase();
-    const [_, database] = loadCountryData(countryCode);
+    const [_, database] = await loadCountryData(countryCode);
 
     if (countryCode) {
         const countryArea = address.countryArea;
@@ -492,7 +471,7 @@ function latinizeAddress(address, normalized = false) {
                 const cityData = database[key];
                 if (cityData) {
                     cleanedData.city = cityData.lname || cityData.name || city;
-                    cityArea = address.cityArea;
+                    const cityArea = address.cityArea;
                     const key = `${countryCode}/${countryArea}/${city}/${cityArea}`;
                     const cityAreaData = database[key];
                     if (cityAreaData) {

@@ -1,19 +1,41 @@
 {
-  "name": "google-i18n-address",
-  "version": "2.3.4",
+  "name": "@cpsdqs/google-i18n-address",
+  "version": "1.0.0",
   "description": "Address validation helpers for Google’s i18n address database",
-  "main": "src",
+  "main": "dist/index.js",
+  "module": "dist-esm/index.js",
+  "files": [
+    "data/*",
+    "dist",
+    "dist-esm"
+  ],
   "scripts": {
-    "test": "node tests"
+    "test": "node tests",
+    "prepublish": "node build.js && node build.js esm"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/cpsdqs/google-i18n-address.git"
   },
-  "contributors": ["Mirumee Software", "cpsdqs <cpsdqs@gmail.com>"],
+  "contributors": [
+    "Mirumee Software",
+    "cpsdqs <cpsdqs@gmail.com>",
+    "miestasmia <mia@miestasmia.com>"
+  ],
   "license": "BSD-3-Clause",
   "bugs": {
     "url": "https://github.com/cpsdqs/google-i18n-address/issues"
   },
-  "homepage": "https://github.com/cpsdqs/google-i18n-address#readme"
+  "homepage": "https://github.com/cpsdqs/google-i18n-address#readme",
+  "devDependencies": {
+    "@babel/core": "^7.7.5",
+    "@babel/preset-env": "^7.7.6",
+    "rollup": "^1.27.13",
+    "rollup-plugin-babel": "^4.3.3",
+    "rollup-plugin-node-resolve": "^5.2.0",
+    "rollup-plugin-re": "^1.0.7"
+  },
+  "dependencies": {
+    "core-js": "^3.5.0"
+  }
 }

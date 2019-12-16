@@ -1,8 +1,7 @@
 global.throws = function throws (closure) {
-    try {
-        closure();
+    closure().then(() => {
         throw new Error('Closure did not throw error');
-    } catch (err) {}
+    }).catch(() => {});
 }
 
 global.assert = function assert (condition, error) {
@@ -26,24 +25,27 @@ global.assertEq = function assertEq (a, b, msgParent) {
     }
 }
 
-global.parametrize = function parametrize (params, closure) {
+global.parametrize = async function parametrize (params, closure) {
     for (const p of params) {
-        closure(...p);
+        await closure(...p);
     }
 }
 
 const tests = Object.assign({}, require('./test-i18naddress'), require('./test-normalization'));
 
-for (const testName in tests) {
-    const test = tests[testName];
+async function run () {
+    for (const testName in tests) {
+        const test = tests[testName];
 
-    try {
-        test();
-        console.error(`\x1b[32m${testName} passed\x1b[m`);
-    } catch (err) {
-        console.error(`\x1b[31m${testName} failed:\x1b[37m`);
-        console.error(err);
-        console.error('\x1b[m');
-        break;
+        try {
+            await test();
+            console.error(`\x1b[32m${testName} passed\x1b[m`);
+        } catch (err) {
+            console.error(`\x1b[31m${testName} failed:\x1b[37m`);
+            console.error(err);
+            console.error('\x1b[m');
+            break;
+        }
     }
 }
+run();

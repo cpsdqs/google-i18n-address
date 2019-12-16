@@ -1,8 +1,8 @@
 const { InvalidAddress, formatAddress, latinizeAddress, normalizeAddress } = require('..');
 
 module.exports = {
-    testValidateAreasErrors() {
-        parametrize([
+    testValidateAreasErrors: async () => {
+        await parametrize([
             [{},
              {countryCode: 'required', city: 'required',
               streetAddress: 'required'}],
@@ -30,9 +30,9 @@ module.exports = {
              {countryCode: 'invalid'}],
             [{countryCode: 'ZZ'},
              {countryCode: 'invalid'}],
-        ], (address, errors) => {
+        ], async (address, errors) => {
             try {
-                normalizeAddress(address);
+                await normalizeAddress(address);
                 assert(false, 'Should not pass');
             } catch (err) {
                 assert(err instanceof InvalidAddress, `${err} should be an InvalidAddress error`);
@@ -41,8 +41,8 @@ module.exports = {
         });
     },
 
-    testValidateKnownAddresses () {
-        parametrize([
+    testValidateKnownAddresses: async () => {
+        await parametrize([
             [{countryCode: 'AE', countryArea: 'Dubai', city: 'Dubai',
              streetAddress: 'P.O Box 1234'}],
             [{countryCode: 'CA', countryArea: 'QC', city: 'Montreal',
@@ -71,14 +71,14 @@ module.exports = {
             [{countryCode: 'US', countryArea: 'California',
              postalCode: '94037', city: 'Mountain View',
              streetAddress: '1600 Charleston Rd.'}],
-        ], address => {
-            normalizeAddress(address);
+        ], async address => {
+            await normalizeAddress(address);
         });
     },
 
-    testLocalizationHandling () {
+    testLocalizationHandling: async () => {
         let address;
-        address = normalizeAddress({
+        address = await normalizeAddress({
             countryCode: 'us',
             countryArea: 'California',
             postalCode: '94037',
@@ -87,7 +87,7 @@ module.exports = {
         });
         assertEq(address.countryCode, 'US');
         assertEq(address.countryArea, 'CA');
-        address = normalizeAddress({
+        address = await normalizeAddress({
             countryCode: 'us',
             countryArea: 'CALIFORNIA',
             postalCode: '94037',
@@ -95,7 +95,7 @@ module.exports = {
             streetAddress: '1600 Charleston Rd.',
         });
         assertEq(address.countryArea, 'CA');
-        address = normalizeAddress({
+        address = await normalizeAddress({
             countryCode: 'CN',
             countryArea: 'Beijing Shi',
             postalCode: '100084',
@@ -104,7 +104,7 @@ module.exports = {
         });
         assertEq(address.countryArea, '北京市');
         assertEq(address.city, '海淀区');
-        address = normalizeAddress({
+        address = await normalizeAddress({
             countryCode: 'AE',
             countryArea: 'Dubai',
             postalCode: '123456',
@@ -117,7 +117,7 @@ module.exports = {
         assertEq(address.sortingCode, '');
     },
 
-    testAddressFormatting () {
+    testAddressFormatting: async () => {
         const address = {
             countryCode: 'CN',
             countryArea: '云南省',
@@ -126,7 +126,7 @@ module.exports = {
             cityArea: '凤庆县',
             streetAddress: '中关村东路1号'
         };
-        const result = formatAddress(address, false);
+        const result = await formatAddress(address, false);
         assertEq(result,
             '677400\n' +
             '云南省临沧市凤庆县\n' +
@@ -135,8 +135,8 @@ module.exports = {
         );
     },
 
-    testCapitalization () {
-        const address = normalizeAddress({
+    testCapitalization: async () => {
+        const address = await normalizeAddress({
             countryCode: 'GB',
             postalCode: 'sw1a 0aa',
             city: 'London',
@@ -146,10 +146,10 @@ module.exports = {
         assertEq(address.postalCode, 'SW1A 0AA');
     },
 
-    testAddressLatinization () {
+    testAddressLatinization: async () => {
         let address;
         address = {};
-        address = latinizeAddress(address, true);
+        address = await latinizeAddress(address, true);
         assertEq(address, {});
         address = {
             countryCode: 'US',
@@ -158,7 +158,7 @@ module.exports = {
             city: 'Mountain View',
             streetAddress: '1600 Charleston Rd.',
         };
-        address = latinizeAddress(address);
+        address = await latinizeAddress(address);
         assertEq(address.countryArea, 'California');
         address = {
             countryCode: 'CN',
@@ -168,7 +168,7 @@ module.exports = {
             cityArea: '凤庆县',
             streetAddress: '中关村东路1号',
         };
-        address = latinizeAddress(address);
+        address = await latinizeAddress(address);
         assertEq(address, {
             countryCode: 'CN',
             countryArea: 'Yunnan Sheng',
@@ -188,8 +188,8 @@ module.exports = {
             sortingCode: '',
             streetAddress: '#1 Zhongguancun East Road',
         };
-        address = latinizeAddress(address);
-        result = formatAddress(address, true);
+        address = await latinizeAddress(address);
+        result = await formatAddress(address, true);
         assertEq(result,
             'Zhang San\n' +
             'Beijing Kid Toy Company\n' +

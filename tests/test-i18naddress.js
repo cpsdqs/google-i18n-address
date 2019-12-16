@@ -2,18 +2,18 @@ const { getFieldOrder, getValidationRules, loadValidationData } = require('..');
 
 module.exports = {
     testInvalidCountryCode () {
-        throws(() => loadValidationData('XX'));
-        throws(() => loadValidationData('../../../etc/passwd'));
+        throws(async () => await loadValidationData('XX'));
+        throws(async () => await loadValidationData('../../../etc/passwd'));
     },
 
-    testDictionaryAccess () {
-        data = loadValidationData('US');
+    testDictionaryAccess: async () => {
+        data = await loadValidationData('US');
         state = data['US/NV'];
         assertEq(state['name'], 'Nevada');
     },
 
-    testValidationRulesCanada () {
-        const validationData = getValidationRules({ countryCode: 'CA' })
+    testValidationRulesCanada: async () => {
+        const validationData = await getValidationRules({ countryCode: 'CA' })
         assertEq(validationData.countryCode, 'CA');
         assertEq(validationData.countryAreaChoices, [
             ['AB', 'Alberta'],
@@ -120,8 +120,8 @@ module.exports = {
     },
     */
 
-    testValidationRulesSwitzerland () {
-        const validationData = getValidationRules({ countryCode: 'CH' });
+    testValidationRulesSwitzerland: async () => {
+        const validationData = await getValidationRules({ countryCode: 'CH' });
         assertEq(validationData.allowedFields.sort(), [
             'companyName', 'city', 'postalCode', 'streetAddress', 'name'
         ].sort());
@@ -130,8 +130,8 @@ module.exports = {
         ].sort());
     },
 
-    testFieldOrderPoland () {
-        const fieldOrder = getFieldOrder({ countryCode: 'PL' });
+    testFieldOrderPoland: async () => {
+        const fieldOrder = await getFieldOrder({ countryCode: 'PL' });
         assertEq(fieldOrder, [
             ['name'],
             ['companyName'],
@@ -140,8 +140,8 @@ module.exports = {
         ]);
     },
 
-    testFieldOrderChina() {
-        const fieldOrder = getFieldOrder({ countryCode: 'CN' });
+    testFieldOrderChina: async () => {
+        const fieldOrder = await getFieldOrder({ countryCode: 'CN' });
         assertEq(fieldOrder, [
             ['postalCode'],
             ['countryArea', 'city', 'cityArea'],
@@ -151,13 +151,13 @@ module.exports = {
         ]);
     },
 
-    testLocalityTypes() {
-        parametrize([
+    testLocalityTypes: async () => {
+        await parametrize([
             ['CN', ['province', 'city', 'district']],
             ['JP', ['prefecture', 'city', 'suburb']],
             ['KR', ['do_si', 'city', 'district']],
-        ] ,(country, levels) => {
-            const validationData = getValidationRules({ countryCode: country });
+        ], async (country, levels) => {
+            const validationData = await getValidationRules({ countryCode: country });
             assertEq(validationData.countryAreaType, levels[0]);
             assertEq(validationData.cityType, levels[1]);
             assertEq(validationData.cityAreaType, levels[2]);
