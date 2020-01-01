@@ -485,7 +485,7 @@ async function latinizeAddress(address, normalized = false) {
     return cleanedData;
 }
 
-module.exports = {
+export {
     KNOWN_FIELDS,
     loadValidationData,
     ValidationRules,
@@ -495,4 +495,4 @@ module.exports = {
     getFieldOrder,
     formatAddress,
     latinizeAddress,
-};
+}
