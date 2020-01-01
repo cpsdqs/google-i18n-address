@@ -52,7 +52,7 @@ async function bundleData () {
     const indexContents = `const imports = {\n` + importStatements.join(',\n') + `\n};
 export default function (code) {
     for (const key in imports) {
-        if (key.split('-').includes(code)) return imports[key];
+        if (key.split('-').includes(code)) return () => imports[key]().then(x => x.default);
     }
 }`;
     fs.writeFileSync(path.join(__dirname, 'src/data-index.js'), indexContents);
