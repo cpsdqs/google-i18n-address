@@ -1,6 +1,6 @@
 {
   "name": "@cpsdqs/google-i18n-address",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Address validation helpers for Google’s i18n address database",
   "main": "dist/index.js",
   "module": "dist-esm/index.js",
